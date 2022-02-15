@@ -17,9 +17,18 @@ router.get('/getAll', isAuthorized, async (req, res) => {
     }
 })
 
+/**
+ * This route receives the id of the fund and the qty to be purchased. 
+ * The username and email are attached to the req object via isAuthorized middleware.
+ * It verifies if the user and fund exist and also if the user has sufficient coins to buy the fund.
+ * SUCCESS @returns 200 and manages the entry on the transaction and portfolio tables
+ * FAILURE @returns 402 - Insufficient Coins, 401 - User/Fund not found, 500
+ */
 router.post('/buy', isAuthorized, async (req, res) => {
     const fundId = req.body.id;
     const fundQty = req.body.qty;
+    if (fundQty <= 0)
+        res.status(400).json({ error: "Quantity cannot be zero or a negative number" });
     try {
         const fund = await Fund.findByPk(fundId);
 
@@ -44,12 +53,46 @@ router.post('/buy', isAuthorized, async (req, res) => {
 
                 res.status(200).json({ message: "Transaction successful" });
             }
-            else res.status(402).json({ error: "Insufficient Funds" });
+            else res.status(402).json({ error: "Insufficient Coins" });
         }
         else res.status(401).json({ error: "Oops" });
 
     } catch (error) {
-        console.log(error);
+        res.status(500).json({ error: error });
+    }
+});
+
+router.post('/sell', isAuthorized, async (req, res) => {
+    const fundId = req.body.id;
+    const fundQty = req.body.qty;
+    if (fundQty <= 0)
+        res.status(400).json({ error: "Quantity cannot be zero or a negative number" });
+    try {
+        const user = await User.findOne({ where: { email: req.email } });
+        const fund = await Fund.findOne({ where: { id: fundId } });
+        const portfolioEntry = await User_Portfolio.findOne({ where: { user_id: user.id, fund_id: fundId } });
+
+        if (user && fund && portfolioEntry) {
+            const totalPrice = fund.price * fundQty;
+
+            if (portfolioEntry.qty >= fundQty) {
+                const newAmount = user.wallet_amount + totalPrice;
+                user.wallet_amount = newAmount;
+                await user.save();
+
+                await Transaction.create({ user_id: user.id, name: fund.name, price: fund.price, qty: fundQty, type: "sell" });
+
+                const newQty = portfolioEntry.qty - fundQty;
+                portfolioEntry.qty = newQty;
+                portfolioEntry.save();
+
+                res.status(200).json({ message: "Transaction successful" });
+            }
+            else res.status(402).json({ error: "You dont have the given quantity of the fund in your account" });
+        }
+        else res.status(401).json({ error: "Oops" });
+
+    } catch (error) {
         res.status(500).json({ error: error });
     }
 

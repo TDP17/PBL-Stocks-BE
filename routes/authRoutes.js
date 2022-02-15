@@ -91,7 +91,6 @@ router.post('/login',
                 res.status(401).json({ error: "Username or password incorrect" })
             }
         } catch (error) {
-            console.log(error);
             res.status(500).json({ error: error });
         }
     });
