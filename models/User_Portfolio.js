@@ -16,9 +16,6 @@ const User_Portfolio = sequelize.define("user_portfolio", {
     qty: {
         type: Sequelize.INTEGER
     },
-    amount: {
-        type: Sequelize.INTEGER
-    }
 });
 
 export default User_Portfolio;

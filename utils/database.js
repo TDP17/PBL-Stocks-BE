@@ -18,4 +18,14 @@ const sequelize = new Sequelize(process.env.DB_DATABASE, process.env.DB_USER, pr
     logging: console.log
 });
 
+try {
+    await sequelize.query(
+        'CREATE OR REPLACE FUNCTION delete_zeroQty_funds() RETURNS trigger LANGUAGE plpgsql AS $function$ BEGIN DELETE FROM User_Portfolios WHERE qty=0 OR qty IS NULL; RETURN NULL; END; $function$'
+    );
+    await sequelize.query(
+        'CREATE TRIGGER delete_zeroQty_funds AFTER UPDATE ON User_Portfolios FOR EACH ROW EXECUTE PROCEDURE delete_zeroQty_funds();' 
+    );
+} catch (error) {
+    console.log(error);
+}
 export default sequelize;
