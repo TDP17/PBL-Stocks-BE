@@ -23,8 +23,14 @@ try {
         'CREATE OR REPLACE FUNCTION delete_zeroQty_funds() RETURNS trigger LANGUAGE plpgsql AS $function$ BEGIN DELETE FROM User_Portfolios WHERE qty=0 OR qty IS NULL; RETURN NULL; END; $function$'
     );
     await sequelize.query(
-        'CREATE TRIGGER delete_zeroQty_funds AFTER UPDATE ON User_Portfolios FOR EACH ROW EXECUTE PROCEDURE delete_zeroQty_funds();' 
+        'CREATE OR REPLACE TRIGGER delete_zeroQty_funds AFTER UPDATE ON User_Portfolios FOR EACH ROW EXECUTE PROCEDURE delete_zeroQty_funds();'
     );
+    // await sequelize.query(
+    //     'CREATE OR REPLACE FUNCTION fill_amount() RETURNS trigger LANGUAGE plpgsql AS $function$ BEGIN SET User_Portfolios.amount = 1; RETURN NULL; END; $function$'
+    // );
+    // await sequelize.query(
+    //     'CREATE OR REPLACE TRIGGER fill_amount BEFORE INSERT ON User_Portfolios FOR EACH ROW EXECUTE PROCEDURE fill_amount();'
+    // );
 } catch (error) {
     console.log(error);
 }

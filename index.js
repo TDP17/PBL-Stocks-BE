@@ -10,12 +10,12 @@ import User_Portfolio from './models/User_Portfolio.js';
 
 import authRoutes from './routes/authRoutes.js';
 import fundsRoutes from './routes/fundsRoutes.js';
+import transactionRoutes from './routes/transactionRoutes.js';
 
 import dotenv from 'dotenv';
 dotenv.config();
 
 const app = express();
-// Random limits
 app.use(express.json({ limit: "50mb", extended: true }));
 app.use(express.urlencoded({ limit: "50mb", extended: true }));
 app.use(cors({ origin: true, credentials: true }));
@@ -24,7 +24,7 @@ const port = process.env.PORT || 5000;
 
 app.use('/auth', authRoutes);
 app.use('/funds', fundsRoutes);
-
+app.use('/transactions', transactionRoutes);
 
 app.get("/", (req, res) => {
     res.send("Hello pbl");

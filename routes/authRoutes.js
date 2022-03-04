@@ -4,6 +4,7 @@ import { body, validationResult } from 'express-validator';
 import jwt from 'jsonwebtoken';
 
 import User from '../models/User.js';
+import { Op } from '@sequelize/core';
 
 const router = express.Router();
 
@@ -21,10 +22,11 @@ router.post('/register',
         body('email')
             .isEmail().withMessage("Email is invalid").trim().escape()
     ],
-    async (req, res, next) => {
+    async (req, res) => {
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
-            return res.status(400).json({ error: errors.array()[0].msg });
+            res.status(400).json({ error: errors.array()[0].msg });
+            return;
         }
 
         const username = req.body.username;
@@ -32,19 +34,28 @@ router.post('/register',
         const password = req.body.password;
         const confirmPassword = req.body.confirmPassword;
         try {
-            const sameUser = await User.findOne({ where: { username: username } });
+            const sameUser = await User.findOne({
+                where: {
+                    [Op.or]: [
+                        { email: email },
+                        { username: username }
+                    ]
+                }
+            });
             if (sameUser) {
-                return res.status(409).json({ error: 'User already exists' })
+                res.status(409).json({ error: 'User already exists' });
+                return;
             }
             else {
                 if (password !== confirmPassword) {
-                    return res.status(400).json({ error: "Password mismatch" })
+                    res.status(400).json({ error: "Password mismatch" });
+                    return;
                 }
                 const hashedPassword = await bcrypt.hash(password, 12);
                 const newUser = { username: username, email: email, password: hashedPassword };
                 const saveUser = await User.create(newUser);
                 if (saveUser) {
-                    return res.status(201).json({ message: "Created" });
+                    res.status(201).json({ message: "Created" });
                 }
             }
         } catch (error) {
@@ -63,7 +74,7 @@ router.post('/login',
         body('username')
             .trim().escape()
     ],
-    async (req, res, next) => {
+    async (req, res) => {
         const password = req.body.password;
         try {
             let user;
