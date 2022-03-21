@@ -20,7 +20,6 @@ const User = sequelize.define("user", {
     },
     password: {
         type: Sequelize.TEXT,
-        allowNull: false
     },
     wallet_amount: {
         type: Sequelize.INTEGER,

@@ -1,6 +1,6 @@
 import express from 'express';
 
-import isAuthorized from '../utils/isAuthorized.js';
+import isAuth from '../utils/isAuth.js';
 import Fund from '../models/Fund.js';
 import User from '../models/User.js';
 import Transaction from '../models/Transaction.js';
@@ -11,7 +11,7 @@ const router = express.Router();
 /**
  * Gets all funds available
  */
-router.get('/getAll', isAuthorized, async (req, res) => {
+router.get('/getAll', isAuth, async (req, res) => {
     try {
         const funds = await Fund.findAll({});
         res.status(200).json({ funds: funds });
@@ -22,14 +22,15 @@ router.get('/getAll', isAuthorized, async (req, res) => {
 
 /**
  * This route receives the id of the fund and the qty to be purchased. 
- * The username and email are attached to the req object via isAuthorized middleware.
+ * The username and email are attached to the req object via isAuth middleware.
  * It verifies if the user and fund exist and also if the user has sufficient coins to buy the fund.
  * SUCCESS @returns 200 and manages the entry on the transaction and portfolio tables
  * FAILURE @returns 402 - Insufficient Coins, 401 - User/Fund not found, 500
  */
-router.post('/buy', isAuthorized, async (req, res) => {
-    const fundId = req.body.id;
+router.post('/buy', isAuth, async (req, res) => {
+    const fundId = +req.body.id;
     const fundQty = +req.body.qty;
+
     if (fundQty <= 0)
         return res.status(400).json({ error: "Quantity cannot be zero or a negative number" });
     try {
@@ -51,7 +52,7 @@ router.post('/buy', isAuthorized, async (req, res) => {
                     prevRecord.qty = newQty;
                     prevRecord.save();
                 }
-                else await user.addFund({ fund_id: fund.id, qty: fundQty });
+                else await User_Portfolio.create({ user_id: user.id, fund_id: fund.id, qty: fundQty })
 
 
                 res.status(200).json({ message: "Transaction successful" });
@@ -59,7 +60,6 @@ router.post('/buy', isAuthorized, async (req, res) => {
             else res.status(402).json({ error: "Insufficient Coins" });
         }
         else res.status(401).json({ error: "Oops" });
-
     } catch (error) {
         res.status(500).json({ error: error });
     }
@@ -67,12 +67,12 @@ router.post('/buy', isAuthorized, async (req, res) => {
 
 /**
  * This route receives the id of the fund and the qty to be purchased. 
- * The username and email are attached to the req object via isAuthorized middleware.
+ * The username and email are attached to the req object via isAuth middleware.
  * It verifies if the user and fund exist and also if the user has the sufficient qty to sell
  * SUCCESS @returns 200 and manages the entry on the transaction and portfolio tables
  * FAILURE @returns 402 - Insufficient Coins, 401 - User/Fund not found, 500
  */
-router.post('/sell', isAuthorized, async (req, res) => {
+router.post('/sell', isAuth, async (req, res) => {
     const fundId = req.body.id;
     const fundQty = +req.body.qty;
     if (fundQty <= 0)
