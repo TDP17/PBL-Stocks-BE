@@ -7,11 +7,18 @@ import jwt from 'jsonwebtoken';
  * Unauthorized @returns 401, error
  * Authorized calls next middleware via next()
  */
-const isAuthorized = (req, res, next) => {
+const isAuth = (req, res, next) => {
+    if (req.isAuthenticated()) {
+        req.username = req.user.username;
+        req.email = req.user.email;
+        next();
+        return;
+    }
     const authHeader = req.get('Authorization');
     let decodedToken;
-    if (!authHeader)
+    if (!authHeader) {
         return res.status(401).json({ error: "Unauthorized" });
+    }
     else {
         const token = req.get('Authorization').split(' ')[1];
         try {
@@ -19,8 +26,9 @@ const isAuthorized = (req, res, next) => {
         } catch (error) {
             return res.status(401).json({ error: "Token expired or malformed" });
         }
-        if (!decodedToken)
+        if (!decodedToken) {
             return res.status(401).json({ error: "Unauthorized" });
+        }
 
         req.username = decodedToken.username;
         req.email = decodedToken.email;
@@ -28,4 +36,4 @@ const isAuthorized = (req, res, next) => {
     }
 };
 
-export default isAuthorized;
+export default isAuth;

@@ -1,13 +1,13 @@
 import express from 'express';
 
-import isAuthorized from '../utils/isAuthorized.js';
+import isAuth from '../utils/isAuth.js';
 import Fund from '../models/Fund.js';
 import User from '../models/User.js';
 import Transaction from '../models/Transaction.js';
 
 const router = express.Router();
 
-router.get('/getAll', isAuthorized, async (req, res) => {
+router.get('/getAll', isAuth, async (req, res) => {
     try {
         const user = await User.findOne({
             where: { email: req.email },

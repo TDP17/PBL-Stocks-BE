@@ -1,6 +1,10 @@
 import express from 'express';
 import cors from 'cors';
+import session from 'express-session';
+import passport from 'passport';
 
+// DO NOT UNCOMMENT THIS, I WILL FIND YOU AND DESTROY EVERYTHING YOU LOVE, TY :)
+import passportSetup from './utils/passport.js'
 import sequelize from './utils/database.js';
 
 import User from './models/User.js';
@@ -9,6 +13,7 @@ import Transaction from './models/Transaction.js';
 import User_Portfolio from './models/User_Portfolio.js';
 
 import authRoutes from './routes/authRoutes.js';
+import googleAuthRoutes from './routes/googleAuthRoutes.js';
 import fundsRoutes from './routes/fundsRoutes.js';
 import transactionRoutes from './routes/transactionRoutes.js';
 
@@ -16,13 +21,25 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 const app = express();
+app.use(session({
+    secret: 'pbl-be',
+    resave: false,
+    saveUninitialized: true,
+}))
 app.use(express.json({ limit: "50mb", extended: true }));
 app.use(express.urlencoded({ limit: "50mb", extended: true }));
-app.use(cors({ origin: true, credentials: true }));
+app.use(cors({
+    origin: "http://localhost:3000",
+    methods: "GET,POST,PUT,DELETE",
+    credentials: true,
+}));
+app.use(passport.initialize());
+app.use(passport.session());
 
 const port = process.env.PORT || 5000;
 
 app.use('/auth', authRoutes);
+app.use('/google-auth', googleAuthRoutes);
 app.use('/funds', fundsRoutes);
 app.use('/transactions', transactionRoutes);
 
