@@ -15,7 +15,7 @@ import User_Portfolio from './models/User_Portfolio.js';
 import authRoutes from './routes/authRoutes.js';
 import googleAuthRoutes from './routes/googleAuthRoutes.js';
 import fundsRoutes from './routes/fundsRoutes.js';
-import transactionRoutes from './routes/transactionRoutes.js';
+import userRoutes from './routes/userRoutes.js';
 
 import dotenv from 'dotenv';
 dotenv.config();
@@ -41,7 +41,7 @@ const port = process.env.PORT || 5000;
 app.use('/auth', authRoutes);
 app.use('/google-auth', googleAuthRoutes);
 app.use('/funds', fundsRoutes);
-app.use('/transactions', transactionRoutes);
+app.use('/user', userRoutes);
 
 app.get("/", (req, res) => {
     res.send("Hello pbl");

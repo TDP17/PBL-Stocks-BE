@@ -84,7 +84,7 @@ router.post('/buy', isAuth, async (req, res) => {
                     from: process.env.MAIL_USERNAME,
                     to: user.email,
                     subject: 'Transaction Successful',
-                    template: 'sell',
+                    template: 'buy',
                     context: {
                         name: user.username,
                         fundName: fund.name,
@@ -140,6 +140,28 @@ router.post('/sell', isAuth, async (req, res) => {
                 const newQty = portfolioEntry.qty - fundQty;
                 portfolioEntry.qty = newQty;
                 portfolioEntry.save();
+
+                transporter.use('compile', hbs(handlebarOptions))
+
+                const mailOptions = {
+                    from: process.env.MAIL_USERNAME,
+                    to: user.email,
+                    subject: 'Transaction Successful',
+                    template: 'sell',
+                    context: {
+                        name: user.username,
+                        fundName: fund.name,
+                        date: Date.now()
+                    }
+                };
+
+                transporter.sendMail(mailOptions, (error, info) => {
+                    if (error) {
+                        console.log(error);
+                    } else {
+                        console.log('Email sent: ' + info.response);
+                    }
+                });
 
                 res.status(200).json({ message: "Transaction successful" });
             }
