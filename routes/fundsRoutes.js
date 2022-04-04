@@ -1,4 +1,8 @@
 import express from 'express';
+import nodemailer from 'nodemailer';
+import hbs from 'nodemailer-express-handlebars';
+import dotenv from 'dotenv';
+import path from 'path';
 
 import isAuth from '../utils/isAuth.js';
 import Fund from '../models/Fund.js';
@@ -6,7 +10,17 @@ import User from '../models/User.js';
 import Transaction from '../models/Transaction.js';
 import User_Portfolio from '../models/User_Portfolio.js';
 
+dotenv.config();
+
 const router = express.Router();
+
+const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+        user: process.env.MAIL_USERNAME,
+        pass: process.env.MAIL_PASSWORD,
+    }
+});
 
 /**
  * Gets all funds available
@@ -19,6 +33,8 @@ router.get('/getAll', isAuth, async (req, res) => {
         res.status(500).json({ error: error });
     }
 })
+
+
 
 /**
  * This route receives the id of the fund and the qty to be purchased. 
@@ -54,13 +70,42 @@ router.post('/buy', isAuth, async (req, res) => {
                 }
                 else await User_Portfolio.create({ user_id: user.id, fund_id: fund.id, qty: fundQty })
 
+                const handlebarOptions = {
+                    viewEngine: {
+                        partialsDir: path.resolve('./emailTemplates/'),
+                        defaultLayout: false,
+                    },
+                    viewPath: path.resolve('./emailTemplates/'),
+                };
 
+                transporter.use('compile', hbs(handlebarOptions))
+
+                const mailOptions = {
+                    from: process.env.MAIL_USERNAME,
+                    to: user.email,
+                    subject: 'Transaction Successful',
+                    template: 'sell',
+                    context: {
+                        name: user.username,
+                        fundName: fund.name,
+                        date: Date.now()
+                    }
+                };
+
+                transporter.sendMail(mailOptions, (error, info) => {
+                    if (error) {
+                        console.log(error);
+                    } else {
+                        console.log('Email sent: ' + info.response);
+                    }
+                });
                 res.status(200).json({ message: "Transaction successful" });
             }
             else res.status(402).json({ error: "Insufficient Coins" });
         }
         else res.status(401).json({ error: "Oops" });
     } catch (error) {
+        console.log(error);
         res.status(500).json({ error: error });
     }
 });
